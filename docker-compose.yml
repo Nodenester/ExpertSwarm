@@ -1,0 +1,107 @@
+services:
+  # ─── SwarmRunner: vLLM inference with multi-LoRA ───
+  vllm:
+    build:
+      context: ./SwarmRunner
+      dockerfile: Dockerfile
+    container_name: swarm-vllm
+    runtime: nvidia
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - SWARM_VLLM_PORT=${SWARM_VLLM_PORT:-8000}
+      - SWARM_BASE_MODEL=${SWARM_BASE_MODEL:-Qwen/Qwen3.5-0.8B-GPTQ-Int4}
+      - SWARM_MAX_LORAS=${SWARM_MAX_LORAS:-64}
+      - SWARM_MAX_CPU_LORAS=${SWARM_MAX_CPU_LORAS:-128}
+      - SWARM_MAX_LORA_RANK=${SWARM_MAX_LORA_RANK:-64}
+      - SWARM_LORA_DIR=/loras
+      - SWARM_MODEL_DIR=/models
+      - SWARM_GPU_MEMORY_UTIL=${SWARM_GPU_MEMORY_UTIL:-0.90}
+      - SWARM_MAX_MODEL_LEN=${SWARM_MAX_MODEL_LEN:-8192}
+      - SWARM_GUIDED_BACKEND=${SWARM_GUIDED_BACKEND:-xgrammar}
+      - HF_TOKEN=${HF_TOKEN}
+      - VLLM_ALLOW_RUNTIME_LORA_UPDATING=True
+    ports:
+      - "${SWARM_VLLM_PORT:-8000}:${SWARM_VLLM_PORT:-8000}"
+    volumes:
+      - lora-adapters:/loras
+      - model-cache:/models
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:${SWARM_VLLM_PORT:-8000}/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+    networks:
+      - swarm-net
+
+  # ─── SwarmRunner: FastAPI meta-router ───
+  router:
+    build:
+      context: ./SwarmRunner
+      dockerfile: Dockerfile.router
+    container_name: swarm-router
+    environment:
+      - SWARM_RUNNER_PORT=${SWARM_RUNNER_PORT:-8100}
+      - SWARM_VLLM_PORT=${SWARM_VLLM_PORT:-8000}
+      - SWARM_BASE_MODEL=${SWARM_BASE_MODEL:-Qwen/Qwen3.5-0.8B-GPTQ-Int4}
+    ports:
+      - "${SWARM_RUNNER_PORT:-8100}:${SWARM_RUNNER_PORT:-8100}"
+    depends_on:
+      vllm:
+        condition: service_healthy
+    volumes:
+      - ./SwarmRunner/config/schemas:/schemas:ro
+    networks:
+      - swarm-net
+
+  # ─── SwarmExecutor: DAG-based swarm orchestration ───
+  executor:
+    build:
+      context: ./SwarmExecutor
+      dockerfile: Dockerfile
+    container_name: swarm-executor
+    environment:
+      - SWARM_EXECUTOR_PORT=${SWARM_EXECUTOR_PORT:-8500}
+      - SWARM_RUNNER_URL=http://router:${SWARM_RUNNER_PORT:-8100}
+      - HIVEMIND_URL=${HIVEMIND_URL:-http://host.docker.internal:8100}
+      - CODEGATE_URL=${CODEGATE_URL:-http://host.docker.internal:9212}
+      - MAX_PARALLEL_AGENTS=${MAX_PARALLEL_AGENTS:-50}
+      - MAX_AGENT_STEPS=${MAX_AGENT_STEPS:-10}
+      - SWARM_CONFIG_DIR=/swarms
+    ports:
+      - "${SWARM_EXECUTOR_PORT:-8500}:${SWARM_EXECUTOR_PORT:-8500}"
+    depends_on:
+      router:
+        condition: service_started
+    volumes:
+      - ./SwarmExecutor/src/swarms:/swarms:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+    networks:
+      - swarm-net
+
+volumes:
+  lora-adapters:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./SwarmRunner/loras
+  model-cache:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./SwarmRunner/models
+
+networks:
+  swarm-net:
+    driver: bridge

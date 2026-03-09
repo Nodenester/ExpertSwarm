@@ -1,0 +1,145 @@
+name: web_research
+description: "WebStorm — multi-agent web research swarm. Scouts generate queries, workers scrape and extract, aggregators cross-reference, synthesizer produces final answer."
+version: "1.0"
+
+# Compression settings for tree-reduction
+compression:
+  group_size: 5
+  max_levels: 3
+  use_llm: true
+
+# Agent templates — instantiated by the orchestrator per task
+agents:
+  planner:
+    role: orchestrator
+    lora_name: orchestrator-web
+    system_prompt: >
+      You are a web research planner. Given a query, decompose it into
+      parallel research tracks. Output a JSON plan with agents, their
+      search queries, and dependencies. Maximize parallelism — scouts
+      and workers in early waves, aggregators in later waves.
+    tools: []
+    max_steps: 3
+    output_schema: plan_schema
+
+  query_scout:
+    role: scout
+    lora_name: scout-query
+    system_prompt: >
+      You generate diverse, effective search queries for web research.
+      For each research track, produce 3-5 queries covering different
+      angles: factual, comparative, recent news, expert opinions.
+    tools: []
+    max_steps: 1
+    context_prep:
+      format: bullet_points
+      max_tokens: 2000
+      compress: true
+
+  url_picker:
+    role: worker
+    lora_name: worker-url-picker
+    system_prompt: >
+      You search the web and select the most relevant URLs for a research
+      query. Prioritize authoritative sources, recent content, and diverse
+      viewpoints. Return a ranked list of URLs with relevance scores.
+    tools:
+      - web_search
+    max_steps: 3
+    context_prep:
+      format: structured
+      max_tokens: 3000
+      compress: true
+    output_schema: null
+
+  scraper:
+    role: worker
+    lora_name: worker-scraper
+    system_prompt: >
+      You scrape web pages and extract clean, relevant content. Strip
+      navigation, ads, and boilerplate. Focus on the main content that
+      answers the research query.
+    tools:
+      - scrape_url
+      - extract_css
+    max_steps: 5
+    context_prep:
+      format: structured
+      max_tokens: 2000
+      strip_html: true
+      compress: true
+
+  fact_extractor:
+    role: worker
+    lora_name: worker-fact-extractor
+    system_prompt: >
+      You extract structured facts from scraped web content. For each fact,
+      note the source, confidence level, and relevant tags. Be precise —
+      distinguish between claims, data points, and opinions.
+    tools: []
+    max_steps: 1
+    context_prep:
+      format: structured
+      max_tokens: 4000
+      strip_html: true
+      compress: true
+    output_schema: fact_schema
+
+  cross_referencer:
+    role: aggregator
+    lora_name: aggregator-xref
+    system_prompt: >
+      You cross-reference facts from multiple sources. Find corroborations,
+      contradictions, and complementary information. Deduplicate overlapping
+      facts and flag disagreements.
+    tools:
+      - store_fact
+      - recall_facts
+    max_steps: 3
+    context_prep:
+      format: structured
+      max_tokens: 6000
+      compress: true
+      include_fields:
+        - facts
+        - summary
+        - sources
+    output_schema: fact_schema
+
+  synthesizer:
+    role: synthesizer
+    lora_name: synthesizer-web
+    system_prompt: >
+      You produce the final research report from aggregated findings. Structure
+      your answer clearly with sections. Cite sources. Highlight key findings,
+      areas of consensus, and unresolved questions. Be comprehensive but concise.
+    tools: []
+    max_steps: 1
+    context_prep:
+      format: bullet_points
+      max_tokens: 8000
+      compress: true
+      include_fields:
+        - facts
+        - cross_references
+        - themes
+        - gaps
+        - summary
+
+# Default DAG template — orchestrator can override
+default_dag:
+  waves:
+    - [planner]
+    - [query_scout]
+    - [url_picker]
+    - [scraper]
+    - [fact_extractor]
+    - [cross_referencer]
+    - [synthesizer]
+  dependencies:
+    query_scout: [planner]
+    url_picker: [query_scout]
+    scraper: [url_picker]
+    fact_extractor: [scraper]
+    cross_referencer: [fact_extractor]
+    synthesizer: [cross_referencer]

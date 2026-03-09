@@ -1,0 +1,43 @@
+# Web Orchestrator — QLoRA SFT training config
+base_model: Qwen/Qwen3.5-0.8B
+max_seq_length: 4096
+load_in_4bit: true
+dtype: float16
+
+lora:
+  rank: 64
+  alpha: 128
+  dropout: 0.05
+  target_modules:
+    - q_proj
+    - k_proj
+    - v_proj
+    - o_proj
+    - gate_proj
+    - up_proj
+    - down_proj
+  bias: none
+
+num_epochs: 3
+batch_size: 2
+gradient_accumulation_steps: 8
+learning_rate: 1e-4
+weight_decay: 0.01
+warmup_ratio: 0.03
+lr_scheduler: cosine
+max_grad_norm: 1.0
+
+dataset_path: orchestrator_web.jsonl
+eval_split: 0.1
+chat_template: chatml
+
+output_dir: checkpoints
+save_steps: 50
+eval_steps: 50
+logging_steps: 5
+
+wandb_project: swarm-trainer
+wandb_run_name: sft-web-orchestrator
+
+expert_name: orchestrator_web
+expert_role: web_orchestrator

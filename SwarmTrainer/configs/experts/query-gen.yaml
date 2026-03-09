@@ -1,0 +1,43 @@
+# Query Generator — QLoRA SFT training config
+base_model: Qwen/Qwen3.5-0.8B
+max_seq_length: 1024
+load_in_4bit: true
+dtype: float16
+
+lora:
+  rank: 16
+  alpha: 32
+  dropout: 0.05
+  target_modules:
+    - q_proj
+    - k_proj
+    - v_proj
+    - o_proj
+    - gate_proj
+    - up_proj
+    - down_proj
+  bias: none
+
+num_epochs: 5
+batch_size: 8
+gradient_accumulation_steps: 2
+learning_rate: 3e-4
+weight_decay: 0.01
+warmup_ratio: 0.05
+lr_scheduler: cosine
+max_grad_norm: 1.0
+
+dataset_path: query_gen.jsonl
+eval_split: 0.1
+chat_template: chatml
+
+output_dir: checkpoints
+save_steps: 50
+eval_steps: 50
+logging_steps: 5
+
+wandb_project: swarm-trainer
+wandb_run_name: sft-query-gen
+
+expert_name: query_gen
+expert_role: search_query_generator

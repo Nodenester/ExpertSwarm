@@ -1,0 +1,162 @@
+name: code_research
+description: "CodeStorm — multi-agent code analysis swarm. Scouts identify files, workers analyze structure and search, aggregators map relationships, synthesizer produces final analysis."
+version: "1.0"
+
+compression:
+  group_size: 4
+  max_levels: 2
+  use_llm: true
+
+agents:
+  planner:
+    role: orchestrator
+    lora_name: orchestrator-code
+    system_prompt: >
+      You are a code analysis planner. Given a query about a codebase,
+      decompose it into parallel analysis tracks: structural analysis,
+      pattern search, dependency mapping, etc. Output a JSON plan.
+    tools: []
+    max_steps: 3
+    output_schema: plan_schema
+
+  file_scout:
+    role: scout
+    lora_name: scout-files
+    system_prompt: >
+      You identify which files and directories are relevant to a code analysis
+      query. Use directory tree and glob to find candidates, then rank them by
+      relevance. Output file paths and search patterns for workers.
+    tools:
+      - directory_tree
+      - glob_files
+    max_steps: 3
+    context_prep:
+      format: structured
+      max_tokens: 2000
+      compress: true
+
+  pattern_scout:
+    role: scout
+    lora_name: scout-patterns
+    system_prompt: >
+      You generate regex patterns and search terms for finding specific code
+      patterns. Consider function names, class names, import patterns, and
+      structural patterns. Output a list of grep patterns with descriptions.
+    tools: []
+    max_steps: 1
+    context_prep:
+      format: bullet_points
+      max_tokens: 1500
+      compress: true
+
+  structure_worker:
+    role: worker
+    lora_name: worker-code-structure
+    system_prompt: >
+      You analyze Python file structure: classes, functions, imports, and their
+      relationships. Use AST analysis for accurate, token-efficient output.
+      Return signatures and outlines, NOT full file contents.
+    tools:
+      - analyze_python_file
+      - extract_signatures
+      - read_file
+    max_steps: 5
+    context_prep:
+      format: code_signatures
+      max_tokens: 4000
+      compress: true
+    output_schema: code_schema
+
+  grep_worker:
+    role: worker
+    lora_name: worker-code-search
+    system_prompt: >
+      You search codebases for specific patterns using grep. Find usages,
+      definitions, and references. Return results with surrounding context
+      for understanding.
+    tools:
+      - grep_files
+      - read_file
+    max_steps: 5
+    context_prep:
+      format: structured
+      max_tokens: 3000
+      compress: true
+    output_schema: code_schema
+
+  file_classifier:
+    role: worker
+    lora_name: worker-file-classifier
+    system_prompt: >
+      You classify files by purpose: config, model, view, controller, test,
+      utility, etc. Scan directory trees and file contents to categorize.
+      This helps other agents understand codebase organization.
+    tools:
+      - directory_tree
+      - read_file
+    max_steps: 3
+    context_prep:
+      format: structured
+      max_tokens: 2000
+      compress: true
+
+  relationship_mapper:
+    role: aggregator
+    lora_name: aggregator-code-relations
+    system_prompt: >
+      You map relationships between code components: imports, inheritance,
+      function calls, shared state. Build a dependency graph from structural
+      analysis and search results. Identify coupling, cohesion patterns,
+      and architectural boundaries.
+    tools:
+      - store_fact
+      - recall_facts
+      - knowledge_graph_query
+    max_steps: 3
+    context_prep:
+      format: code_signatures
+      max_tokens: 6000
+      compress: true
+      include_fields:
+        - classes
+        - functions
+        - imports
+        - search_results
+
+  synthesizer:
+    role: synthesizer
+    lora_name: synthesizer-code
+    system_prompt: >
+      You produce the final code analysis report. Structure it with clear
+      sections: overview, key components, relationships, patterns found,
+      and recommendations. Use code references (file:line) for precision.
+      Be technical and actionable.
+    tools: []
+    max_steps: 1
+    context_prep:
+      format: structured
+      max_tokens: 8000
+      compress: true
+      include_fields:
+        - summary
+        - classes
+        - functions
+        - search_results
+        - themes
+        - gaps
+
+default_dag:
+  waves:
+    - [planner]
+    - [file_scout, pattern_scout]
+    - [structure_worker, grep_worker, file_classifier]
+    - [relationship_mapper]
+    - [synthesizer]
+  dependencies:
+    file_scout: [planner]
+    pattern_scout: [planner]
+    structure_worker: [file_scout]
+    grep_worker: [pattern_scout]
+    file_classifier: [file_scout]
+    relationship_mapper: [structure_worker, grep_worker, file_classifier]
+    synthesizer: [relationship_mapper]

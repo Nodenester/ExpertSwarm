@@ -1,0 +1,58 @@
+services:
+  vllm:
+    build: .
+    container_name: swarm-vllm
+    runtime: nvidia
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - CUDA_VISIBLE_DEVICES=GPU-1ea4953b-fa6e-ac3e-be9a-d80979f7a6d9
+      - CUDA_DEVICE_ORDER=PCI_BUS_ID
+      - SWARM_VLLM_PORT=${SWARM_VLLM_PORT:-8000}
+      - SWARM_BASE_MODEL=${SWARM_BASE_MODEL:-Qwen/Qwen3.5-0.8B}
+      - SWARM_MAX_LORAS=${SWARM_MAX_LORAS:-64}
+      - SWARM_MAX_CPU_LORAS=${SWARM_MAX_CPU_LORAS:-128}
+      - SWARM_MAX_LORA_RANK=${SWARM_MAX_LORA_RANK:-64}
+      - SWARM_LORA_DIR=/loras
+      - SWARM_MODEL_DIR=/models
+      - SWARM_GPU_MEMORY_UTIL=${SWARM_GPU_MEMORY_UTIL:-0.80}
+      - SWARM_MAX_MODEL_LEN=${SWARM_MAX_MODEL_LEN:-4096}
+      - SWARM_GUIDED_BACKEND=${SWARM_GUIDED_BACKEND:-xgrammar}
+      - VLLM_ALLOW_RUNTIME_LORA_UPDATING=true
+      - HF_TOKEN=${HF_TOKEN}
+    ports:
+      - "${SWARM_VLLM_PORT:-8000}:${SWARM_VLLM_PORT:-8000}"
+    volumes:
+      - ./loras:/loras
+      - ./models:/models
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:${SWARM_VLLM_PORT:-8000}/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+
+  router:
+    build:
+      context: .
+      dockerfile: Dockerfile.router
+    container_name: swarm-router
+    environment:
+      - SWARM_RUNNER_PORT=${SWARM_RUNNER_PORT:-8100}
+      - SWARM_VLLM_PORT=${SWARM_VLLM_PORT:-8000}
+      - SWARM_VLLM_URL=http://vllm:${SWARM_VLLM_PORT:-8000}
+      - SWARM_BASE_MODEL=${SWARM_BASE_MODEL:-Qwen/Qwen3.5-0.8B}
+    ports:
+      - "${SWARM_RUNNER_PORT:-8100}:${SWARM_RUNNER_PORT:-8100}"
+    depends_on:
+      vllm:
+        condition: service_healthy
+    volumes:
+      - ./router:/app/router
+      - ./config/schemas:/schemas

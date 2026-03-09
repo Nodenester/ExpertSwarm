@@ -1,0 +1,44 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "URLSelection",
+  "description": "Ranked selection of URLs to visit from search results",
+  "type": "object",
+  "required": ["selected"],
+  "properties": {
+    "selected": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["url", "reason", "relevance"],
+        "properties": {
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "The URL to visit"
+          },
+          "reason": {
+            "type": "string",
+            "description": "Why this URL was selected"
+          },
+          "relevance": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 1.0,
+            "description": "Estimated relevance to the objective"
+          },
+          "expected_content": {
+            "type": "string",
+            "description": "What content is expected at this URL"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "rejected_count": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Number of URLs considered but not selected"
+    }
+  },
+  "additionalProperties": false
+}

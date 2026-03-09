@@ -1,0 +1,15 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+RUN pip install --no-cache-dir fastapi uvicorn httpx pyyaml
+
+COPY router/ /app/router/
+
+ENV SWARM_RUNNER_PORT=8100 \
+    SWARM_VLLM_PORT=8000 \
+    SWARM_BASE_MODEL=Qwen/Qwen3.5-0.8B
+
+EXPOSE ${SWARM_RUNNER_PORT}
+
+CMD ["sh", "-c", "uvicorn router.router:app --host 0.0.0.0 --port ${SWARM_RUNNER_PORT}"]

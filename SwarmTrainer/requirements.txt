@@ -1,0 +1,17 @@
+unsloth
+trl
+transformers
+datasets
+peft
+accelerate
+openai>=1.60.0
+pyyaml>=6.0
+wandb
+torch
+bitsandbytes
+sentencepiece
+protobuf
+requests
+beautifulsoup4
+httpx
+jsonlines

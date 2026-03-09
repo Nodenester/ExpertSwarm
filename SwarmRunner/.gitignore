@@ -1,0 +1,21 @@
+# Model weights
+models/*
+!models/.gitkeep
+
+# LoRA adapters
+loras/*
+!loras/.gitkeep
+
+# Environment
+.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# IDE
+.vscode/
+.idea/

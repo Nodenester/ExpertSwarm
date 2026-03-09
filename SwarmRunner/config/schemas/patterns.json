@@ -1,0 +1,66 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "CodePatterns",
+  "description": "Identified patterns, idioms, and conventions in code",
+  "type": "object",
+  "required": ["patterns"],
+  "properties": {
+    "patterns": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "category", "description"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Pattern name (e.g., 'singleton', 'observer', 'retry_with_backoff')"
+          },
+          "category": {
+            "type": "string",
+            "enum": ["design_pattern", "idiom", "anti_pattern", "convention", "architecture", "error_handling", "concurrency"],
+            "description": "Classification of the pattern"
+          },
+          "description": {
+            "type": "string",
+            "description": "What the pattern does and why it is used"
+          },
+          "occurrences": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["location"],
+              "properties": {
+                "location": {
+                  "type": "string",
+                  "description": "File path or code location"
+                },
+                "snippet": {
+                  "type": "string",
+                  "description": "Representative code snippet"
+                }
+              },
+              "additionalProperties": false
+            },
+            "description": "Where this pattern appears"
+          },
+          "recommendation": {
+            "type": "string",
+            "enum": ["keep", "refactor", "remove", "monitor"],
+            "description": "Suggested action for this pattern"
+          },
+          "rationale": {
+            "type": "string",
+            "description": "Why this recommendation is made"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "overall_quality": {
+      "type": "string",
+      "enum": ["excellent", "good", "fair", "poor"],
+      "description": "Overall code pattern quality assessment"
+    }
+  },
+  "additionalProperties": false
+}

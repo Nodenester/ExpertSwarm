@@ -1,0 +1,25 @@
+# vLLM serving configuration for SwarmRunner
+# This file documents the serving parameters; actual config is passed via
+# CLI args / env vars in the Dockerfile entrypoint.
+
+model: "${SWARM_BASE_MODEL}"
+port: 8000
+
+lora:
+  enabled: true
+  max_loras: 64
+  max_cpu_loras: 128
+  max_lora_rank: 64
+  lora_modules_path: "/loras"
+
+memory:
+  gpu_memory_utilization: 0.90
+  max_model_len: 8192
+
+decoding:
+  guided_backend: "xgrammar"
+  schema_dir: "/schemas"
+
+download:
+  dir: "/models"
+  trust_remote_code: true

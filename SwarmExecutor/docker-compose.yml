@@ -1,0 +1,19 @@
+version: "3.9"
+
+services:
+  swarm-executor:
+    build: .
+    ports:
+      - "8500:8500"
+    environment:
+      - SWARM_EXECUTOR_PORT=8500
+      - SWARM_RUNNER_URL=http://swarm-runner:8100
+      - HIVEMIND_URL=http://hivemind:8100
+      - CODEGATE_URL=http://codegate:9212
+      - MAX_PARALLEL_AGENTS=50
+      - MAX_AGENT_STEPS=10
+      - SWARM_CONFIG_DIR=/swarms
+    volumes:
+      - ./src:/app/src
+      - ./src/swarms:/swarms
+    restart: unless-stopped

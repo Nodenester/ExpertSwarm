@@ -1,0 +1,44 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "SearchQueries",
+  "description": "Generated search queries for information retrieval",
+  "type": "object",
+  "required": ["objective", "queries"],
+  "properties": {
+    "objective": {
+      "type": "string",
+      "description": "The information need these queries aim to satisfy"
+    },
+    "queries": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["query", "intent", "priority"],
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "The search query string"
+          },
+          "intent": {
+            "type": "string",
+            "enum": ["factual", "exploratory", "navigational", "comparative", "tutorial"],
+            "description": "The search intent category"
+          },
+          "priority": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5,
+            "description": "Priority rank (1 = highest)"
+          },
+          "expected_source": {
+            "type": "string",
+            "description": "Expected type of source (docs, forum, paper, etc.)"
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

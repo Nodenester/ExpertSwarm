@@ -1,0 +1,36 @@
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Training artifacts
+checkpoints/
+datasets/*.jsonl
+datasets/curriculum/
+eval_results/
+*.pt
+*.bin
+*.safetensors
+!datasets/.gitkeep
+!checkpoints/.gitkeep
+
+# Environment
+.env
+.env.local
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Wandb
+wandb/

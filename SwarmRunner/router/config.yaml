@@ -1,0 +1,57 @@
+# SwarmRunner meta-router configuration
+# Maps task types to LoRA adapter names via keyword matching
+
+# Default model when no route matches (base model, no LoRA)
+default_model: "${SWARM_BASE_MODEL}"
+
+# vLLM backend
+vllm_base_url: "http://vllm:${SWARM_VLLM_PORT}"
+
+# Route definitions: keyword patterns mapped to LoRA adapter names
+# The router checks the "task_type" field in the request body,
+# or scans the last user message for keyword matches.
+routes:
+  - name: "planner"
+    lora_name: "planner-lora"
+    keywords: ["plan", "planning", "decompose", "break down", "dag", "steps"]
+    description: "Task decomposition and DAG planning"
+
+  - name: "researcher"
+    lora_name: "researcher-lora"
+    keywords: ["search", "find", "lookup", "research", "investigate", "query"]
+    description: "Information retrieval and search query generation"
+
+  - name: "extractor"
+    lora_name: "extractor-lora"
+    keywords: ["extract", "parse", "scrape", "selector", "css", "html"]
+    description: "Content extraction and CSS selector generation"
+
+  - name: "analyst"
+    lora_name: "analyst-lora"
+    keywords: ["analyze", "summarize", "compare", "evaluate", "assess"]
+    description: "Analysis, summarization, and evaluation"
+
+  - name: "coder"
+    lora_name: "coder-lora"
+    keywords: ["code", "implement", "function", "debug", "program", "script"]
+    description: "Code generation and analysis"
+
+  - name: "verifier"
+    lora_name: "verifier-lora"
+    keywords: ["verify", "check", "validate", "confirm", "cross-reference"]
+    description: "Fact verification and cross-referencing"
+
+  - name: "graph_builder"
+    lora_name: "graph-lora"
+    keywords: ["graph", "relationship", "entity", "connection", "network", "map"]
+    description: "Relationship mapping and knowledge graph construction"
+
+# Schema bindings: which JSON schema to use for guided decoding per route
+schema_bindings:
+  planner: "plan.json"
+  researcher: "queries.json"
+  extractor: "selector.json"
+  analyst: "facts.json"
+  coder: "code_summary.json"
+  verifier: "verification.json"
+  graph_builder: "graph.json"

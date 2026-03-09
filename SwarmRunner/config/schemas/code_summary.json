@@ -1,0 +1,73 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "CodeSummary",
+  "description": "Structured analysis and summary of a code snippet or file",
+  "type": "object",
+  "required": ["language", "purpose", "components"],
+  "properties": {
+    "language": {
+      "type": "string",
+      "description": "Programming language of the code"
+    },
+    "purpose": {
+      "type": "string",
+      "description": "What the code does at a high level"
+    },
+    "components": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "kind", "description"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Function, class, or variable name"
+          },
+          "kind": {
+            "type": "string",
+            "enum": ["function", "class", "method", "variable", "constant", "import", "type", "interface"],
+            "description": "What kind of code component this is"
+          },
+          "description": {
+            "type": "string",
+            "description": "What this component does"
+          },
+          "inputs": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Parameters or dependencies"
+          },
+          "outputs": {
+            "type": "string",
+            "description": "Return type or side effects"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "dependencies": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "External libraries or modules imported"
+    },
+    "complexity": {
+      "type": "string",
+      "enum": ["trivial", "simple", "moderate", "complex", "very_complex"],
+      "description": "Estimated code complexity"
+    },
+    "issues": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["severity", "description"],
+        "properties": {
+          "severity": { "type": "string", "enum": ["info", "warning", "error"] },
+          "description": { "type": "string" }
+        },
+        "additionalProperties": false
+      },
+      "description": "Potential issues or improvements"
+    }
+  },
+  "additionalProperties": false
+}

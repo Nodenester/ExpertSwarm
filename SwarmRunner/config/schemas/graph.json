@@ -1,0 +1,74 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "RelationshipGraph",
+  "description": "Knowledge graph of entities and their relationships",
+  "type": "object",
+  "required": ["nodes", "edges"],
+  "properties": {
+    "nodes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "label", "type"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique node identifier"
+          },
+          "label": {
+            "type": "string",
+            "description": "Human-readable name for this entity"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["person", "organization", "concept", "technology", "event", "location", "document", "other"],
+            "description": "Entity type category"
+          },
+          "properties": {
+            "type": "object",
+            "additionalProperties": { "type": "string" },
+            "description": "Additional key-value properties"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "edges": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["source", "target", "relation"],
+        "properties": {
+          "source": {
+            "type": "string",
+            "description": "Source node ID"
+          },
+          "target": {
+            "type": "string",
+            "description": "Target node ID"
+          },
+          "relation": {
+            "type": "string",
+            "description": "Type of relationship (e.g. 'depends_on', 'authored_by', 'part_of')"
+          },
+          "weight": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 1.0,
+            "description": "Strength or confidence of this relationship"
+          },
+          "bidirectional": {
+            "type": "boolean",
+            "description": "Whether the relationship goes both ways"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "context": {
+      "type": "string",
+      "description": "Domain or context this graph represents"
+    }
+  },
+  "additionalProperties": false
+}

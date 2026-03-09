@@ -1,0 +1,43 @@
+# Fact Extractor — QLoRA SFT training config
+base_model: Qwen/Qwen3.5-0.8B
+max_seq_length: 2048
+load_in_4bit: true
+dtype: bfloat16
+
+lora:
+  rank: 32
+  alpha: 64
+  dropout: 0.05
+  target_modules:
+    - q_proj
+    - k_proj
+    - v_proj
+    - o_proj
+    - gate_proj
+    - up_proj
+    - down_proj
+  bias: none
+
+num_epochs: 3
+batch_size: 1
+gradient_accumulation_steps: 16
+learning_rate: 2e-4
+weight_decay: 0.01
+warmup_ratio: 0.03
+lr_scheduler: cosine
+max_grad_norm: 1.0
+
+dataset_path: fact_extractor.jsonl
+eval_split: 0.1
+chat_template: chatml
+
+output_dir: checkpoints
+save_steps: 100
+eval_steps: 100
+logging_steps: 10
+
+wandb_project: swarm-trainer
+wandb_run_name: sft-fact-extractor
+
+expert_name: fact_extractor
+expert_role: fact_extractor

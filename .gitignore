@@ -1,0 +1,46 @@
+# Environment
+.env
+*.env.local
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+.mypy_cache/
+.pytest_cache/
+
+# Model files (large binaries)
+*.pt
+*.bin
+*.safetensors
+*.gguf
+*.pth
+
+# Large tokenizer files
+SwarmRunner/loras/*/tokenizer.json
+SwarmTrainer/checkpoints/
+
+# Downloaded models
+SwarmRunner/models/
+
+# Unsloth compiled cache
+SwarmTrainer/unsloth_compiled_cache/
+
+# Node
+node_modules/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Weights & Biases
+wandb/
